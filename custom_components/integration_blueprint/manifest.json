@@ -1,0 +1,12 @@
+{
+  "domain": "yaml_preprocessor",
+  "name": "Yaml Preprocessor",
+  "codeowners": [
+    "@ludeeus"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/huafu/HaYamlPreprocessor",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/huafu/HaYamlPreprocessor/issues",
+  "version": "0.1.0"
+}
