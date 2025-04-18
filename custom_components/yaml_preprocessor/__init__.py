@@ -65,6 +65,10 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         )
         return False
 
+    # we will complete the paths with the config dir
+    input_dir = hass.config.path(input_dir)
+    output_dir = hass.config.path(output_dir)
+
     # Register the process service
     def process_service(_call: ServiceCall) -> None:
         try:
