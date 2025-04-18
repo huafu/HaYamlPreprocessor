@@ -4,9 +4,14 @@ default_config:
 # https://www.home-assistant.io/integrations/homeassistant/
 homeassistant:
   debug: true
+  packages: !include_dir_named packages/output
 
 # https://www.home-assistant.io/integrations/logger/
 logger:
   default: info
   logs:
     custom_components.yaml_preprocessor: debug
+
+yaml_preprocessor:
+  input_dir: packages/input
+  output_dir: packages/output

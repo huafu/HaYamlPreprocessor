@@ -1,0 +1,3 @@
+unique_id: test_sensor_${id}
+name: "${name}"
+state: "{{ states('sensor.test_sensor_source_${id}') }}"

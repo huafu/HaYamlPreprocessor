@@ -2,6 +2,7 @@
     "domain": "yaml_preprocessor",
     "name": "YAML Preprocessor",
     "version": "1.0.0",
+    "integration_type": "system",
     "documentation": "https://github.com/huafu/yaml_preprocessor",
     "issue_tracker": "https://github.com/huafu/yaml_preprocessor/issues",
     "dependencies": [],
