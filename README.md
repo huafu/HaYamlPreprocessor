@@ -1,3 +1,57 @@
+# YAML Pre-processor
+
+[![HACS Badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://hacs.xyz/)
+[![GitHub release](https://img.shields.io/github/release/huafu/HaYamlPreprocessor.svg)](https://github.com/huafu/HaYamlPreprocessor/releases)
+
+**Yaml Preprocessor** is a custom Home Assistant integration that brings ESPHome‑style YAML preprocessing to your configuration. It registers a custom YAML constructor for the `!include` tag—allowing you to include external YAML files with variable substitution (e.g. replacing any instance of `${var_name}` with its provided value).
+
+## Usage
+
+1. Install the integration via HACS or manually.
+2. Add the integration to your configuration.yaml file:
+    ```yaml
+    yaml_preprocessor:
+      input_dir: packages/input
+      output_dir: packages/output
+    # Example of using the integration with Home Assistant packages
+    # but you can use it with any other !include_dir tag.
+    homeassistant:
+      packages: !include_dir_named packages/output
+    ```
+3. Restart Home Assistant to load the integration.
+4. Create a directory for your YAML files (e.g. `packages/input`).
+5. Within the `input_dir`, create YAML files using (or not) the `!include` tag. For example:
+    ```yaml
+    # packages/input/hello.yaml
+    sensors:
+    - platform: template
+        sensors:
+        hello_world: !include
+          file: hello/.sensor.yaml
+            vars:
+            name: "World"
+            id: "one"
+        hello_huafu: !include
+          file: hello/.sensor.yaml
+            vars:
+            name: "Huafu"
+            id: "two"
+    ```
+
+    ```yaml
+    # packages/input/hello/.sensor.yaml
+    unique_id: hello_${id}
+    friendly_name: Hello ${name}
+    value_template: >
+      {% if is_state('sensor.hello_${id}', 'on') %}
+        Hello ${name}!
+      {% else %}
+        Goodbye ${name}!
+      {% endif %}
+    ```
+6. Call the `yaml_preprocessor.process` service to process the input files and generate the output files.
+7. Reload Home Assistant configuration to see the changes.
+
 ## What?
 
 This repository contains multiple files, here is a overview:
