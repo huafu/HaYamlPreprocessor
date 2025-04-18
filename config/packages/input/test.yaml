@@ -2,12 +2,12 @@ sensors:
   - platform: template
     sensors:
       test_sensor_1: !include
-        file: packages/test/.sensor.yaml
+        file: test/.sensor.yaml
         vars:
           name: Test Sensor One
           id: one
       test_sensor_2: !include
-        file: packages/test/.sensor.yaml
+        file: test/.sensor.yaml
         vars:
           name: Test Sensor Two
           id: two

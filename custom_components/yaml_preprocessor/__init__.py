@@ -65,11 +65,11 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
         )
         return False
 
-    # we will complete the paths with the config dir
+    # Complete the paths relative to the config directory.
     input_dir = hass.config.path(input_dir)
     output_dir = hass.config.path(output_dir)
 
-    # Register the process service
+    # Register the process service.
     def process_service(_call: ServiceCall) -> None:
         try:
             _process_yaml(input_dir, output_dir)
@@ -94,13 +94,14 @@ def _process_yaml(input_dir: str, output_dir: str) -> None:
     """
     _prepare_output_directory(input_dir, output_dir)
     _create_readme(output_dir)
-    _process_yaml_files(output_dir)
+    _process_yaml_files(input_dir, output_dir)
 
 
 def _prepare_output_directory(input_dir: str, output_dir: str) -> None:
     if Path(output_dir).exists():
         shutil.rmtree(output_dir)
-    shutil.copytree(input_dir, output_dir)
+    # Copy the tree structure from input_dir to output_dir without dot-prefixed files.
+    shutil.copytree(input_dir, output_dir, ignore=shutil.ignore_patterns(".*"))
     _LOGGER.info("Copied directory '%s' to '%s'", input_dir, output_dir)
 
 
@@ -114,8 +115,14 @@ def _create_readme(output_dir: str) -> None:
         _LOGGER.exception("Failed to create README.md in '%s'", output_dir)
 
 
-def _process_yaml_files(output_dir: str) -> None:
-    """Traverse output_dir and process YAML files."""
+def _process_yaml_files(input_dir: str, output_dir: str) -> None:
+    """
+    Traverse output_dir and process YAML files.
+
+    When includes are encountered, the file path defined within the output_dir is
+    remapped to its corresponding path in input_dir so that hidden (dot-prefixed)
+    source files can be accessed.
+    """
 
     class CustomLoader(yaml.SafeLoader):
         def __init__(self, stream: Any, base_dir: Path) -> None:
@@ -126,7 +133,20 @@ def _process_yaml_files(output_dir: str) -> None:
         if isinstance(node, yaml.MappingNode):
             value = loader.construct_mapping(node, deep=True)
             if isinstance(value, dict) and "file" in value and "vars" in value:
-                include_path: Path = loader.base_dir / value["file"]
+                # Compute the intended include file path based on the original
+                # input_dir.
+                # loader.base_dir is based in output_dir. We try to map it back
+                # to input_dir.
+                out_dir = Path(output_dir)
+                in_dir = Path(input_dir)
+                try:
+                    # Attempt to get the relative path from output_dir.
+                    rel_base = loader.base_dir.relative_to(out_dir)
+                    source_base: Path = in_dir / rel_base
+                except ValueError:
+                    # Fallback: if base_dir is not under output_dir, use it as is.
+                    source_base = loader.base_dir
+                include_path: Path = source_base / value["file"]
                 try:
                     with include_path.open("r", encoding="utf-8") as included_file:
                         file_content: str = included_file.read()
