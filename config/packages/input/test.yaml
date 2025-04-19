@@ -1,15 +1,14 @@
-sensors:
-  - platform: template
-    sensors:
-      test_sensor_1: !include
+template:
+  - sensor:
+    - !include
         file: test/.sensor.yaml
         vars:
           name: Test Sensor One
           id: one
-      test_sensor_2: !include
+    - !include
         file: test/.sensor.yaml
         vars:
           name: Test Sensor Two
           id: two
 
-scripts: !include_dir_list scripts
+script: !include scripts.yaml

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .const import DOMAIN, LOGGER
+from .const import DOMAIN, LOGGER, SERVICE_PROCESS_SCHEMA
 from .transformer import process_yaml_files
 
 if TYPE_CHECKING:
@@ -51,13 +51,20 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     output_dir = hass.config.path(output_dir)
 
     # Register the process service.
-    def process_service(_call: ServiceCall) -> None:
+    def process_service(call: ServiceCall) -> None:
+        # read the optional "reload_config" flag
+        reload_config: bool = call.data.get("reload_config", False)
         try:
             process_yaml_files(input_dir, output_dir)
+            # if the processing is successful, reload the configuration
+            if reload_config:
+                hass.services.call("homeassistant", "reload_core_config")
         except (FileNotFoundError, PermissionError, yaml.YAMLError):
             LOGGER.exception("Error during YAML preprocessing")
 
-    hass.services.register(DOMAIN, "process", process_service)
+    hass.services.register(
+        DOMAIN, "process", process_service, schema=SERVICE_PROCESS_SCHEMA
+    )
     LOGGER.info(
         "Component '%s' loaded. Service '%s.process' is available.", DOMAIN, DOMAIN
     )

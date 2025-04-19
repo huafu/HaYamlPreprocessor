@@ -66,7 +66,9 @@ yaml.add_representer(_RawTag, _raw_tag_representer)
 
 
 # Fallback constructor for unrecognized tags, with type hints.
-def _fallback_constructor(loader: yaml.Loader, tag: str, node: yaml.Node) -> _RawTag:
+def _fallback_constructor(
+    loader: yaml.Loader | yaml.UnsafeLoader | yaml.FullLoader, tag: str, node: yaml.Node
+) -> _RawTag:
     if isinstance(node, yaml.ScalarNode):
         value: Any = node.value  # Simply get the scalar value.
     elif isinstance(node, yaml.SequenceNode):
@@ -88,7 +90,7 @@ def _include_constructor(
 ) -> Any:
     # Load the value of the !include tag
     if not isinstance(node, yaml.MappingNode):
-        return node
+        return _fallback_constructor(loader, "!include", node)
 
     # Construct the mapping from the node
     value = loader.construct_mapping(node, deep=True)

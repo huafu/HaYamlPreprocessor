@@ -8,6 +8,19 @@ This module defines:
 
 import logging
 
+import homeassistant.helpers.config_validation as cv
+import voluptuous as vol
+
+# Schema for the process service.
+# The 'reload_config' parameter is a Boolean indicating whether to reload HA's
+# YAML configuration after a successful pre-processing.
+SERVICE_PROCESS_SCHEMA = vol.Schema(
+    {
+        vol.Optional("reload_config", default=False): cv.boolean,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 # The logger for the YAML Preprocessor integration.
 LOGGER: logging.Logger = logging.getLogger(__package__)
 

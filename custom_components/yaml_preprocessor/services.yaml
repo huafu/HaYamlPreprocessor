@@ -1,0 +1,8 @@
+process:
+  description: "Process the YAML files in the input_dir and optionally reload Home Assistant configuration."
+  fields:
+    reload_config:
+      description: "If true, the service will reload your Home Assistant YAML configuration after processing."
+      example: false
+      selector:
+        boolean: {}
