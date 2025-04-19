@@ -11,3 +11,5 @@ sensors:
         vars:
           name: Test Sensor Two
           id: two
+
+scripts: !include_dir_list scripts

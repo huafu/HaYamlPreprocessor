@@ -8,12 +8,10 @@ inclusion. It is designed to simplify YAML management in Home Assistant configur
 
 from __future__ import annotations
 
-import logging
-import os
-import re
-import shutil
-from pathlib import Path
 from typing import TYPE_CHECKING
+
+from .const import DOMAIN, LOGGER
+from .transformer import process_yaml_files
 
 if TYPE_CHECKING:
     from typing import Any
@@ -21,23 +19,6 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant, ServiceCall
 
 import yaml
-
-_LOGGER: logging.Logger = logging.getLogger(__package__)
-
-DOMAIN: str = "yaml_preprocessor"
-
-# Warning comment to prepend to each YAML file in the output directory
-AUTO_GENERATED_WARNING: str = (
-    "# WARNING: This file is auto-generated. Do not modify this file directly. "
-    "Please edit the corresponding file in the input directory.\n\n"
-)
-
-# Content of the README file in the output directory
-README_CONTENT: str = (
-    "WARNING: This directory is wiped and regenerated entirely during each "
-    "processing run.\n"
-    "Do not modify the contents directly. Edit files in the input directory instead.\n"
-)
 
 
 def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
@@ -54,13 +35,13 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """
     conf = config.get(DOMAIN)
     if not conf:
-        _LOGGER.error("Configuration missing for '%s'", DOMAIN)
+        LOGGER.error("Configuration missing for '%s'", DOMAIN)
         return False
 
     input_dir: str = conf.get("input_dir")
     output_dir: str = conf.get("output_dir")
     if not input_dir or not output_dir:
-        _LOGGER.error(
+        LOGGER.error(
             "'input_dir' and 'output_dir' must be defined in the configuration."
         )
         return False
@@ -72,163 +53,12 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     # Register the process service.
     def process_service(_call: ServiceCall) -> None:
         try:
-            _process_yaml(Path(input_dir), Path(output_dir))
+            process_yaml_files(input_dir, output_dir)
         except (FileNotFoundError, PermissionError, yaml.YAMLError):
-            _LOGGER.exception("Error during YAML preprocessing")
+            LOGGER.exception("Error during YAML preprocessing")
 
     hass.services.register(DOMAIN, "process", process_service)
-    _LOGGER.info(
+    LOGGER.info(
         "Component '%s' loaded. Service '%s.process' is available.", DOMAIN, DOMAIN
     )
     return True
-
-
-def _process_yaml(input_dir: Path, output_dir: Path) -> None:
-    """
-    Process YAML files by copying input_dir to output_dir and applying preprocessing.
-
-    Args:
-        input_dir: Path to the input directory.
-        output_dir: Path to the output directory.
-
-    """
-    _prepare_output_directory(input_dir, output_dir)
-    _create_readme(output_dir)
-    _process_yaml_files(input_dir, output_dir)
-
-
-def _prepare_output_directory(input_dir: Path, output_dir: Path) -> None:
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    # Copy the tree structure from input_dir to output_dir without dot-prefixed files.
-    shutil.copytree(input_dir, output_dir, ignore=shutil.ignore_patterns(".*"))
-    _LOGGER.info("Copied directory '%s' to '%s'", input_dir, output_dir)
-
-
-def _create_readme(output_dir: Path) -> None:
-    """Create a README.md file in the output directory."""
-    readme_path: Path = Path(output_dir) / "README.md"
-    try:
-        with readme_path.open("w", encoding="utf-8") as readme_file:
-            readme_file.write(README_CONTENT)
-    except OSError:
-        _LOGGER.exception("Failed to create README.md in '%s'", output_dir)
-
-
-class _CustomLoader(yaml.SafeLoader):
-    def __init__(
-        self, stream: Any, base_dir: Path, input_dir: Path, output_dir: Path
-    ) -> None:
-        super().__init__(stream)
-        self.base_dir = base_dir
-        self.input_dir = input_dir
-        self.output_dir = output_dir
-
-
-def _include_constructor(loader: _CustomLoader, node: yaml.Node) -> Any:
-    if isinstance(node, yaml.MappingNode):
-        value = loader.construct_mapping(node, deep=True)
-        if isinstance(value, dict) and "file" in value and "vars" in value:
-            # Compute the intended include file path based on the original
-            # input_dir.
-            # loader.base_dir is based in output_dir. We try to map it back
-            # to input_dir.
-            out_dir = Path(loader.output_dir)
-            in_dir = Path(loader.input_dir)
-            try:
-                # Attempt to get the relative path from output_dir.
-                rel_base = loader.base_dir.relative_to(out_dir)
-                source_base: Path = in_dir / rel_base
-            except ValueError:
-                # Fallback: if base_dir is not under output_dir, use it as is.
-                source_base = loader.base_dir
-            include_path: Path = source_base / value["file"]
-            try:
-                with include_path.open("r", encoding="utf-8") as included_file:
-                    file_content: str = included_file.read()
-            except (FileNotFoundError, PermissionError, OSError):
-                _LOGGER.exception("Failed to open file '%s'", include_path)
-                file_content = ""
-
-            def replace_var(match: re.Match) -> str:
-                var_name: str = match.group(1)
-                if var_name in value["vars"]:
-                    return str(value["vars"][var_name])
-                _LOGGER.warning(
-                    "Variable '%s' not found in '%s'. Replacing with an empty string.",
-                    var_name,
-                    include_path,
-                )
-                return ""
-
-            processed_content: str = re.sub(r"\$\{(\w+)\}", replace_var, file_content)
-
-            # Parse the processed content as YAML so that the include returns
-            # the YAML structure, not merely a string.
-            try:
-                loaded_content: Any = yaml.safe_load(processed_content)
-            except yaml.YAMLError:
-                _LOGGER.exception(
-                    "Failed to parse YAML from included file '%s'", include_path
-                )
-                return processed_content
-            else:
-                return loaded_content
-        _LOGGER.warning(
-            "Invalid format for !include. Value must contain 'file' and 'vars'."
-        )
-        return value
-    return loader.construct_object(node)
-
-
-_CustomLoader.add_constructor("!include", _include_constructor)
-
-
-def _process_yaml_files(input_dir: Path, output_dir: Path) -> None:
-    """
-    Traverse output_dir and process YAML files.
-
-    When includes are encountered, the file path defined within the output_dir is
-    remapped to its corresponding path in input_dir so that hidden (dot-prefixed)
-    source files can be accessed.
-    """
-
-    def make_loader(base_dir: Path) -> type[yaml.SafeLoader]:
-        """
-        Return a Loader class with the provided base_dir pre-bound.
-
-        This factory avoids the lambda typing problem by returning a proper type.
-        """
-
-        class LoaderWithBase(_CustomLoader):  # type: ignore[misc]
-            def __init__(self, stream: Any) -> None:
-                super().__init__(stream, base_dir, input_dir, output_dir)
-
-        return LoaderWithBase
-
-    for root, dirs, files in os.walk(output_dir):
-        dirs[:] = [d for d in dirs if not d.startswith(".")]
-        for file in files:
-            if file.startswith(".") or not file.endswith((".yaml", ".yml")):
-                continue
-            file_path: Path = Path(root) / file
-            _LOGGER.debug("Processing YAML file: %s", file_path)
-            try:
-                with file_path.open("r", encoding="utf-8") as yaml_file:
-                    content: str = yaml_file.read()
-                base_dir: Path = file_path.parent
-                LoaderCls = make_loader(base_dir)  # noqa: N806
-                data: Any = yaml.load(content, Loader=LoaderCls)  # noqa: S506
-                new_content: str = yaml.safe_dump(
-                    data, allow_unicode=True, default_flow_style=False
-                )
-                new_content = AUTO_GENERATED_WARNING + new_content
-                with file_path.open("w", encoding="utf-8") as yaml_file:
-                    yaml_file.write(new_content)
-            except (yaml.YAMLError, FileNotFoundError, PermissionError, OSError):
-                _LOGGER.exception("Failed to process file '%s'", file_path)
-
-    _LOGGER.info(
-        "YAML preprocessing completed. Processed files are available in '%s'.",
-        output_dir,
-    )
