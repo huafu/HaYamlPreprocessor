@@ -10,8 +10,8 @@ if [[ ! -d "${PWD}/config" ]]; then
     hass --config "${PWD}/config" --script ensure_config
 fi
 
-# Removes the test output
-if [[ -d "${PWD}/config/packages/output" ]]; then
+# Removes the test output unless --keep is passed
+if [[ -d "${PWD}/config/packages/output" && "$1" != "--keep" ]]; then
     rm -rf "${PWD}/config/packages/output"
 fi
 
