@@ -18,7 +18,10 @@
                 "github.vscode-pull-request-github",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ryanluker.vscode-coverage-gutters"
+                "ryanluker.vscode-coverage-gutters",
+                "njpwerner.autodocstring",
+                "vivaxy.vscode-conventional-commits",
+                "EditorConfig.EditorConfig"
             ],
             "settings": {
                 "files.eol": "\n",
@@ -32,7 +35,10 @@
                 "python.defaultInterpreterPath": "/usr/local/bin/python",
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
-                }
+                },
+                "conventionalCommits.promptScopes": false,
+                "conventionalCommits.promptBody": false,
+                "conventionalCommits.gitmoji": false
             }
         }
     },
