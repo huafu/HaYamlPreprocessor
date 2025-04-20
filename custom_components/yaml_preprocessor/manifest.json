@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "integration_type": "system",
     "iot_class": "local_polling",
-    "icon": "mdi:code-block-braces",
+    "config_flow": false,
     "documentation": "https://github.com/huafu/yaml_preprocessor",
     "issue_tracker": "https://github.com/huafu/yaml_preprocessor/issues",
     "dependencies": [],

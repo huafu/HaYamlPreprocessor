@@ -8,7 +8,28 @@ This module defines:
 
 import logging
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
+
+# The logger for the YAML Preprocessor integration.
+LOGGER: logging.Logger = logging.getLogger(__package__)
+
+# The domain name for the YAML Preprocessor integration.
+DOMAIN: str = "yaml_preprocessor"
+
+# Define the configuration schema for YAML Preprocessor.
+# This satisfies the requirement to define CONFIG_SCHEMA for integrations using setup.
+CONFIG_SCHEMA = vol.Schema(
+    {
+        DOMAIN: vol.Schema(
+            {
+                vol.Required("input_dir"): cv.string,
+                vol.Required("output_dir"): cv.string,
+            }
+        )
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 # Service schema: an optional "on_success" parameter must be either "reload" or
 # "restart".
@@ -18,13 +39,6 @@ SERVICE_PROCESS_SCHEMA = vol.Schema(
     },
     extra=vol.ALLOW_EXTRA,
 )
-
-# The logger for the YAML Preprocessor integration.
-LOGGER: logging.Logger = logging.getLogger(__package__)
-
-# The domain name for the YAML Preprocessor integration.
-DOMAIN: str = "yaml_preprocessor"
-
 
 # Warning comment to prepend to each YAML file in the output directory
 AUTO_GENERATED_WARNING: str = (
