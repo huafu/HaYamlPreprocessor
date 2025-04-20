@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .const import DOMAIN, LOGGER, SERVICE_PROCESS_SCHEMA
+from .const import CONFIG_SCHEMA, DOMAIN, LOGGER, SERVICE_PROCESS_SCHEMA  # noqa: F401
 from .transformer import process_yaml_files
 
 if TYPE_CHECKING:

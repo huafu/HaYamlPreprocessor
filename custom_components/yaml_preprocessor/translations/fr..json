@@ -1,0 +1,15 @@
+{
+  "title": "Préprocesseur YAML",
+  "services": {
+    "process": {
+      "name": "Traiter les fichiers YAML",
+      "description": "Traite les fichiers YAML et exécute éventuellement une action après traitement.",
+      "fields": {
+        "on_success": {
+          "name": "Action après succès",
+          "description": "Sélectionnez une action à effectuer après traitement : 'reload' pour recharger la configuration, 'restart' pour redémarrer Home Assistant."
+        }
+      }
+    }
+  }
+}

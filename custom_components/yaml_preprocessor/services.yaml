@@ -1,11 +1,7 @@
 process:
-  description: "Process the YAML files and optionally perform an action on success."
+  name: "yaml_preprocessor.services.process.name"
+  description: "yaml_preprocessor.services.process.description"
   fields:
     on_success:
-      description: "Select an action to perform after processing YAML: 'reload' to reload the core configuration, 'restart' to restart Home Assistant, or leave empty for no action."
-      example: reload
-      selector:
-        select:
-          options:
-            - reload
-            - restart
+      name: "yaml_preprocessor.services.process.on_success.name"
+      description: "yaml_preprocessor.services.process.on_success.description"
