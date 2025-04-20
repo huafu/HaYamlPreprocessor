@@ -1,12 +1,7 @@
 process:
-  name: "yaml_preprocessor.process.name"
-  description: "yaml_preprocessor.process.description"
+  name: "yaml_preprocessor.services.process.name"
+  description: "yaml_preprocessor.services.process.description"
   fields:
     on_success:
-      name: "yaml_preprocessor.process.on_success.name"
-      description: "yaml_preprocessor.process.on_success.description"
-      selector:
-        select:
-          options:
-            - reload
-            - restart
+      name: "yaml_preprocessor.services.process.on_success.name"
+      description: "yaml_preprocessor.services.process.on_success.description"

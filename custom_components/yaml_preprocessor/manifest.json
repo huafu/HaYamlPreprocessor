@@ -1,13 +1,13 @@
 {
+  "domain": "yaml_preprocessor",
+  "name": "YAML Preprocessor",
   "codeowners": ["@huafu"],
   "config_flow": false,
   "dependencies": [],
   "documentation": "https://github.com/huafu/yaml_preprocessor",
-  "domain": "yaml_preprocessor",
   "integration_type": "system",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/huafu/yaml_preprocessor/issues",
-  "name": "YAML Preprocessor",
   "requirements": [],
   "version": "1.0.0"
 }

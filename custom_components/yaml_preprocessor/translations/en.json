@@ -1,14 +1,14 @@
 {
+  "title": "YAML Preprocessor",
+  "domain": "yaml_preprocessor",
   "services": {
-    "yaml_preprocessor": {
-      "process": {
-        "name": "Process YAML Files",
-        "description": "Processes YAML files and optionally executes an action on success.",
-        "fields": {
-          "on_success": {
-            "name": "On Success Action",
-            "description": "Choose an action to perform after processing: 'reload' to reload configuration, 'restart' to restart Home Assistant, or leave empty for no action."
-          }
+    "process": {
+      "name": "Process YAML Files",
+      "description": "Processes YAML files and optionally executes an action on success.",
+      "fields": {
+        "on_success": {
+          "name": "On Success Action",
+          "description": "Select an action to perform after processing YAML: 'reload' to reload the configuration, 'restart' to restart Home Assistant, or leave empty for no action."
         }
       }
     }
