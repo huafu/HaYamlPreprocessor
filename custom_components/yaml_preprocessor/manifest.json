@@ -3,6 +3,8 @@
     "name": "YAML Preprocessor",
     "version": "1.0.0",
     "integration_type": "system",
+    "iot_class": "local_polling",
+    "icon": "mdi:code-block-braces",
     "documentation": "https://github.com/huafu/yaml_preprocessor",
     "issue_tracker": "https://github.com/huafu/yaml_preprocessor/issues",
     "dependencies": [],

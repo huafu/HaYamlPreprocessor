@@ -52,13 +52,22 @@ def setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
 
     # Register the process service.
     def process_service(call: ServiceCall) -> None:
-        # read the optional "reload_config" flag
-        reload_config: bool = call.data.get("reload_config", False)
         try:
             process_yaml_files(input_dir, output_dir)
             # if the processing is successful, reload the configuration
-            if reload_config:
-                hass.services.call("homeassistant", "reload_core_config")
+            on_success: str | None = call.data.get("on_success")
+            if on_success == "reload":
+                LOGGER.info(
+                    "YAML processing completed successfully."
+                    " Reloading Home Assistant configuration..."
+                )
+                hass.services.call("homeassistant", "reload_core_config", {})
+            elif on_success == "restart":
+                LOGGER.info(
+                    "YAML processing completed successfully."
+                    " Restarting Home Assistant..."
+                )
+                hass.services.call("homeassistant", "restart", {})
         except (FileNotFoundError, PermissionError, yaml.YAMLError):
             LOGGER.exception("Error during YAML preprocessing")
 
