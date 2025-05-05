@@ -15,13 +15,14 @@
         "vscode": {
             "extensions": [
                 "charliermarsh.ruff",
+                "EditorConfig.EditorConfig",
+                "github.vscode-github-actions",
                 "github.vscode-pull-request-github",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ryanluker.vscode-coverage-gutters",
                 "njpwerner.autodocstring",
-                "vivaxy.vscode-conventional-commits",
-                "EditorConfig.EditorConfig"
+                "ryanluker.vscode-coverage-gutters",
+                "vivaxy.vscode-conventional-commits"
             ],
             "settings": {
                 "files.eol": "\n",

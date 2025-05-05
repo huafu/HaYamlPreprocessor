@@ -1,0 +1,88 @@
+name: Create Release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of version bump: patch, minor, or major'
+        required: true
+        default: 'patch'
+
+jobs:
+  create_release_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 'lts/jod'
+
+      - name: Read current version from manifest.json
+        id: get_version
+        run: |
+          manifest_file="custom_components/yaml_preprocessor/manifest.json"
+          if [ ! -f "$manifest_file" ]; then
+            echo "Error: $manifest_file not found!"
+            exit 1
+          fi
+          current_version=$(jq -r '.version' "$manifest_file")
+          echo "Current version: $current_version"
+          echo "::set-output name=current::$current_version"
+
+      - name: Bump version in manifest.json
+        id: bump_version
+        run: |
+          release_type=${{ github.event.inputs.release_type }}
+          current_version=${{ steps.get_version.outputs.current }}
+          echo "Bumping version $current_version with release type '$release_type'"
+          new_version=$(npx semver "$current_version" --increment "$release_type")
+          echo "New version: $new_version"
+          manifest_file="custom_components/yaml_preprocessor/manifest.json"
+          jq --arg ver "$new_version" '.version = $ver' "$manifest_file" > tmp_manifest.json && mv tmp_manifest.json "$manifest_file"
+          echo "::set-output name=new_version::$new_version"
+
+      - name: Generate/update CHANGELOG.md with emojis
+        run: |
+          npm install -g conventional-changelog-cli
+          # Use the custom changelog configuration file to inject emojis.
+          npx conventional-changelog -c changelog.config.js -i CHANGELOG.md -s
+
+      - name: Commit version bump and changelog
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add custom_components/yaml_preprocessor/manifest.json CHANGELOG.md
+          git commit -m "chore(release): bump version to $(jq -r '.version' custom_components/yaml_preprocessor/manifest.json)"
+
+      - name: Create release branch
+        id: create_branch
+        run: |
+          new_version=$(jq -r '.version' custom_components/yaml_preprocessor/manifest.json)
+          branch_name="release/v${new_version}"
+          git checkout -b "$branch_name"
+          echo "Branch created: $branch_name"
+          echo "::set-output name=branch_name::$branch_name"
+
+      - name: Push release branch
+        run: |
+          branch_name=$(git branch --show-current)
+          git push origin "$branch_name"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.create_branch.outputs.branch_name }}
+          title: "Release v${{ steps.bump_version.outputs.new_version }}"
+          body: |
+            This PR bumps the version to **v${{ steps.bump_version.outputs.new_version }}** and updates the changelog with new changes.
+            The changelog now includes emojis for improved readability. Please review before merging.
+          base: main
+          commit-message: "chore: prepare release v${{ steps.bump_version.outputs.new_version }}"
