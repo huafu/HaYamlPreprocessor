@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+manifest_file="custom_components/yaml_preprocessor/manifest.json"
+
+# Check if jq is installed
+if ! command -v jq &> /dev/null; then
+    echo "jq could not be found. Please install jq to run this script."
+    exit 1
+fi
+# Check if the manifest file exists
+if [ ! -f "$manifest_file" ]; then
+    echo "Error: $manifest_file not found!"
+    exit 1
+fi
+
+version=$(jq -r '.version' "$manifest_file")
+
+# if no argument is passed, print the version
+if [ $# -eq 0 ]; then
+    echo "$version"
+    exit 0
+fi
+# if the argument is a version, update the version in the manifest file
+if [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    new_version=$1
+    jq --arg new_version "$new_version" '.version = $new_version' "$manifest_file" > tmp.json && mv tmp.json "$manifest_file"
+    echo "Version updated to $new_version in $manifest_file"
+    exit 0
+fi
+
+# else it's a wrong usage, print error message & usage
+echo "Error: Invalid argument. Please provide a version number (e.g., 1.0.0) or no argument to print the current version."
