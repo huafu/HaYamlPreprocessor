@@ -20,9 +20,10 @@
                 "github.vscode-pull-request-github",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "njpwerner.autodocstring",
                 "ryanluker.vscode-coverage-gutters",
-                "vivaxy.vscode-conventional-commits"
+                "njpwerner.autodocstring",
+                "vivaxy.vscode-conventional-commits",
+                "EditorConfig.EditorConfig"
             ],
             "settings": {
                 "files.eol": "\n",
